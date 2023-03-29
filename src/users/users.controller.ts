@@ -8,67 +8,29 @@ import {
   Patch,
   Delete,
 } from '@nestjs/common';
-import { User, Prisma } from '@prisma/client';
 import { UsersService } from './users.service';
+import { User } from './entities/user.entity';
+import { CreateUserDto } from './dto/create-user.dto';
 
 @Controller('users')
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
   @Get()
-  async findAll(
-    @Query('current') current: string,
-    @Query('size') size: string,
-    @Query('keyword') keyword: string,
-  ): Promise<User[]> {
-    const where: Prisma.UserWhereInput = {};
-
-    if (keyword) {
-      where.OR = [
-        { name: { contains: keyword } },
-        { mobile: { contains: keyword } },
-        { email: { contains: keyword } },
-      ];
-    }
-
-    return this.usersService.users({
-      current: parseInt(current) ?? 0,
-      size: parseInt(size) ?? 10,
-      where,
-    });
-  }
-
-  @Get(':id')
-  async find(@Param('id') id: string): Promise<User | null> {
-    return this.usersService.user({ id });
+  async findAll(): Promise<{ items: User[]; total: number }> {
+    return this.usersService.findAll();
   }
 
   @Post()
   async signup(
     @Body()
-    userData: Prisma.UserCreateInput,
+    createUserDto: CreateUserDto,
   ): Promise<User> {
-    return this.usersService.createUser(userData);
-  }
-
-  @Patch(':id')
-  async updateUser(
-    @Param('id') id: string,
-    @Body()
-    userData: Prisma.UserUpdateInput,
-  ): Promise<User> {
-    return this.usersService.updateUser({
-      where: {
-        id,
-      },
-      data: userData,
-    });
+    return this.usersService.createUser(createUserDto);
   }
 
   @Delete(':id')
-  async deleteUser(@Param('id') id: string): Promise<User> {
-    return this.usersService.deleteUser({
-      id,
-    });
+  async deleteUser(@Param('id') id: string) {
+    return this.usersService.deleteUser(parseInt(id));
   }
 }
