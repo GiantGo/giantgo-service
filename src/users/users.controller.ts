@@ -10,12 +10,16 @@ import {
   HttpCode,
   UseGuards,
 } from '@nestjs/common';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { UsersService } from './users.service';
 import { User } from './entities/user.entity';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { QueryUserDto } from './dto/query-user.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt.guard';
 
+@ApiBearerAuth()
+@ApiTags('users')
 @Controller('users')
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
@@ -23,11 +27,9 @@ export class UsersController {
   @UseGuards(JwtAuthGuard)
   @Get()
   async findAll(
-    @Query('current') current: number,
-    @Query('size') size: number,
-    @Query('keyword') keyword: string,
+    @Query() query: QueryUserDto,
   ): Promise<{ items: User[]; total: number }> {
-    return this.usersService.findAll(current, size, keyword);
+    return this.usersService.findAll(query);
   }
 
   @Post()

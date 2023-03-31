@@ -5,6 +5,7 @@ import * as argon2 from 'argon2';
 import { User } from './entities/user.entity';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { QueryUserDto } from './dto/query-user.dto';
 
 @Injectable()
 export class UsersService {
@@ -32,10 +33,9 @@ export class UsersService {
   }
 
   async findAll(
-    current: number,
-    size: number,
-    keyword: string,
+    query: QueryUserDto,
   ): Promise<{ items: User[]; total: number }> {
+    const { current, size, keyword } = query;
     const qb = this.usersRepository.createQueryBuilder();
 
     if (keyword) {
@@ -55,11 +55,11 @@ export class UsersService {
     const total = await qb.getCount();
 
     if (current) {
-      qb.offset((current - 1) * size);
+      qb.offset((query.current - 1) * query.size);
     }
 
     if (size) {
-      qb.limit(size);
+      qb.limit(query.size);
     }
 
     const items = await qb.getMany();
