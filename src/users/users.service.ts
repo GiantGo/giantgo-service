@@ -13,20 +13,22 @@ export class UsersService {
     private usersRepository: Repository<User>,
   ) {}
 
-  async find(id: number): Promise<User> {
+  async find(id: string): Promise<User> {
     return await this.usersRepository.findOne({
       where: { id },
     });
   }
 
   async findOne(username: string): Promise<User> {
-    return await this.usersRepository.findOne({
-      where: [
-        { username: username },
-        { email: username },
-        { mobile: username },
-      ],
-    });
+    const qb = this.usersRepository.createQueryBuilder();
+
+    qb.where([
+      { username: username },
+      { email: username },
+      { mobile: username },
+    ]).addSelect('User.password');
+
+    return qb.getOne();
   }
 
   async findAll(
@@ -89,7 +91,7 @@ export class UsersService {
     return this.usersRepository.save(user);
   }
 
-  async updateUser(id: number, updateUserDto: UpdateUserDto): Promise<User> {
+  async updateUser(id: string, updateUserDto: UpdateUserDto): Promise<User> {
     const user = await this.usersRepository.findOne({ where: { id } });
 
     if (!user) {
@@ -129,7 +131,7 @@ export class UsersService {
     return this.usersRepository.save(updated);
   }
 
-  async deleteUser(id: number): Promise<DeleteResult> {
+  async deleteUser(id: string): Promise<DeleteResult> {
     const user = await this.usersRepository.findOne({ where: { id } });
 
     if (!user) {
