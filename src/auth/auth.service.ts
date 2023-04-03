@@ -1,5 +1,5 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
-import * as argon2 from 'argon2';
+import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
 import { UsersService } from '../users/users.service';
 import { SignInDto } from '../auth/dto/sign-in.dto';
@@ -14,7 +14,7 @@ export class AuthService {
   async signIn(signInDto: SignInDto): Promise<{ token: string }> {
     const user = await this.usersService.findOne(signInDto.username);
 
-    if (!user || !(await argon2.verify(user.password, signInDto.password))) {
+    if (!user || !(await bcrypt.compare(signInDto.password, user.password))) {
       throw new UnauthorizedException('用户名或者密码不正确');
     }
 

@@ -1,7 +1,7 @@
 import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, DeleteResult, Like, Not } from 'typeorm';
-import * as argon2 from 'argon2';
+import * as bcrypt from 'bcrypt';
 import { User } from './entities/user.entity';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -86,7 +86,10 @@ export class UsersService {
     user.username = createUserDto.username;
     user.email = createUserDto.email;
     user.mobile = createUserDto.mobile;
-    user.password = await argon2.hash(createUserDto.password);
+    user.password = await bcrypt.hash(
+      createUserDto.password,
+      await bcrypt.genSalt(),
+    );
 
     return this.usersRepository.save(user);
   }
