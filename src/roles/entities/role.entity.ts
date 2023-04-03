@@ -8,31 +8,28 @@ import {
   UpdateDateColumn,
   DeleteDateColumn,
 } from 'typeorm';
-import { Role } from 'src/roles/entities/role.entity';
+import { Permission } from '../../permissions/entities/permission.entity';
 
-@Entity('User')
-export class User {
+@Entity('Role')
+export class Role {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column({ nullable: true })
+  @Column()
   name: string;
 
   @Column()
-  username: string;
+  slug: string;
 
-  @Column({ nullable: true })
-  email: string;
+  @Column()
+  description: string;
 
-  @Column({ nullable: true })
-  mobile: string;
+  @Column()
+  isSystem: boolean;
 
-  @Column({ select: false })
-  password: string;
-
-  @ManyToMany(() => User)
+  @ManyToMany(() => Permission)
   @JoinTable()
-  roles: Role[];
+  permissions: Permission[];
 
   @CreateDateColumn()
   createdAt: Date;
