@@ -35,14 +35,21 @@ export class PermissionsService {
     return this.permissionsRepository.save(permission);
   }
 
-  findAll() {
+  findAll(): Promise<Permission[]> {
     return this.dataSource.getTreeRepository(Permission).findTrees();
   }
 
-  findOne(id: string) {
+  findOne(id: string): Promise<Permission> {
     return this.permissionsRepository.findOne({
       where: { id },
     });
+  }
+
+  async findIds(ids: Array<string>): Promise<Permission[]> {
+    return this.permissionsRepository
+      .createQueryBuilder()
+      .whereInIds(ids)
+      .getMany();
   }
 
   async update(id: string, updatePermissionDto: UpdatePermissionDto) {

@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, DeleteResult, Like, Not } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { User } from './entities/user.entity';
+import { RolesService } from '../roles/roles.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { QueryUserDto } from './dto/query-user.dto';
@@ -12,11 +13,15 @@ export class UsersService {
   constructor(
     @InjectRepository(User)
     private usersRepository: Repository<User>,
+    private rolesService: RolesService,
   ) {}
 
   async find(id: string): Promise<User> {
     return this.usersRepository.findOne({
       where: { id },
+      relations: {
+        roles: true,
+      },
     });
   }
 
@@ -142,5 +147,23 @@ export class UsersService {
     }
 
     return this.usersRepository.softDelete(id);
+  }
+
+  async assignRoles(id: string, roleIds: Array<string>) {
+    const user = await this.usersRepository.findOne({ where: { id } });
+
+    if (!user) {
+      throw new HttpException('用户不存在', HttpStatus.BAD_REQUEST);
+    }
+
+    const roles = await this.rolesService.findIds(roleIds);
+
+    console.log(roles);
+
+    const updated = Object.assign(user, {
+      roles,
+    });
+
+    return this.usersRepository.save(updated);
   }
 }

@@ -9,6 +9,7 @@ import {
   Delete,
   HttpCode,
   UseGuards,
+  Put,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { UsersService } from './users.service';
@@ -30,6 +31,11 @@ export class UsersController {
     @Query() query: QueryUserDto,
   ): Promise<{ items: User[]; total: number }> {
     return this.usersService.findAll(query);
+  }
+
+  @Get(':id')
+  findOne(@Param('id') id: string) {
+    return this.usersService.find(id);
   }
 
   @Post()
@@ -55,5 +61,10 @@ export class UsersController {
   @HttpCode(204)
   async deleteUser(@Param('id') id: string) {
     return this.usersService.deleteUser(id);
+  }
+
+  @Put(':id/roles')
+  async assignRoles(@Param('id') id: string, @Body() roleIds: Array<string>) {
+    return this.usersService.assignRoles(id, roleIds);
   }
 }

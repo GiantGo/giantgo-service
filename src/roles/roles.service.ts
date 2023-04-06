@@ -1,26 +1,110 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository, Not } from 'typeorm';
 import { CreateRoleDto } from './dto/create-role.dto';
 import { UpdateRoleDto } from './dto/update-role.dto';
+import { Role } from './entities/role.entity';
+import { PermissionsService } from 'src/permissions/permissions.service';
 
 @Injectable()
 export class RolesService {
-  create(createRoleDto: CreateRoleDto) {
-    return 'This action adds a new role';
+  constructor(
+    @InjectRepository(Role)
+    private rolesRepository: Repository<Role>,
+    private permissionService: PermissionsService,
+  ) {}
+
+  async create(createRoleDto: CreateRoleDto) {
+    const exist = await this.rolesRepository.findOne({
+      where: { slug: createRoleDto.slug },
+    });
+
+    if (exist) {
+      throw new HttpException('编码已存在', HttpStatus.BAD_REQUEST);
+    }
+
+    const role = new Role();
+
+    role.name = createRoleDto.name;
+    role.slug = createRoleDto.slug;
+    role.description = createRoleDto.description;
+
+    return this.rolesRepository.save(role);
   }
 
-  findAll() {
-    return `This action returns all roles`;
+  async findAll(): Promise<Role[]> {
+    return this.rolesRepository.find();
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} role`;
+  async findOne(id: string): Promise<Role> {
+    const qb = this.rolesRepository
+      .createQueryBuilder()
+      .where({
+        id,
+      })
+      .leftJoin('Role.permissions', 'Permission')
+      .select(['Role', 'Permission.slug']);
+
+    return qb.getOne();
   }
 
-  update(id: number, updateRoleDto: UpdateRoleDto) {
-    return `This action updates a #${id} role`;
+  async findIds(ids: Array<string>): Promise<Role[]> {
+    return this.rolesRepository.createQueryBuilder().whereInIds(ids).getMany();
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} role`;
+  async update(id: string, updateRoleDto: UpdateRoleDto) {
+    const role = await this.rolesRepository.findOne({
+      where: { id },
+    });
+
+    if (!role) {
+      throw new HttpException('角色不存在', HttpStatus.BAD_REQUEST);
+    }
+
+    const qb = this.rolesRepository.createQueryBuilder();
+
+    qb.where({
+      id: Not(id),
+    }).andWhere({
+      slug: updateRoleDto.slug,
+    });
+
+    const exist = await qb.getCount();
+
+    if (exist) {
+      throw new HttpException('编码已存在', HttpStatus.BAD_REQUEST);
+    }
+
+    const updated = Object.assign(role, updateRoleDto);
+
+    return this.rolesRepository.save(updated);
+  }
+
+  async remove(id: string) {
+    const role = await this.rolesRepository.findOne({
+      where: { id },
+    });
+
+    if (!role) {
+      throw new HttpException('角色不存在', HttpStatus.BAD_REQUEST);
+    }
+
+    return this.rolesRepository.softDelete(id);
+  }
+
+  async assignPermissions(id: string, permissionIds: Array<string>) {
+    const role = await this.rolesRepository.findOne({ where: { id } });
+
+    if (!role) {
+      throw new HttpException('角色不存在', HttpStatus.BAD_REQUEST);
+    }
+
+    const permissions = await this.permissionService.findIds(permissionIds);
+
+    const updated = Object.assign(role, {
+      permissions,
+    });
+
+    return this.rolesRepository.save(updated);
   }
 }

@@ -30,7 +30,7 @@ export class User {
   @Column({ select: false })
   password: string;
 
-  @ManyToMany(() => User)
+  @ManyToMany(() => Role)
   @JoinTable()
   roles: Role[];
 

@@ -21,10 +21,10 @@ export class Role {
   @Column()
   slug: string;
 
-  @Column()
+  @Column({ nullable: true })
   description: string;
 
-  @Column()
+  @Column({ default: false })
   isSystem: boolean;
 
   @ManyToMany(() => Permission)
