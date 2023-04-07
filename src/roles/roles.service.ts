@@ -14,7 +14,27 @@ export class RolesService {
     private permissionService: PermissionsService,
   ) {}
 
-  async create(createRoleDto: CreateRoleDto) {
+  async getRoleList(): Promise<Role[]> {
+    return this.rolesRepository.find();
+  }
+
+  async getRole(id: string): Promise<Role> {
+    const qb = this.rolesRepository
+      .createQueryBuilder()
+      .where({
+        id,
+      })
+      .leftJoin('Role.permissions', 'Permission')
+      .select(['Role', 'Permission.slug']);
+
+    return qb.getOne();
+  }
+
+  async findByIds(ids: Array<string>): Promise<Role[]> {
+    return this.rolesRepository.createQueryBuilder().whereInIds(ids).getMany();
+  }
+
+  async createRole(createRoleDto: CreateRoleDto) {
     const exist = await this.rolesRepository.findOne({
       where: { slug: createRoleDto.slug },
     });
@@ -32,27 +52,7 @@ export class RolesService {
     return this.rolesRepository.save(role);
   }
 
-  async findAll(): Promise<Role[]> {
-    return this.rolesRepository.find();
-  }
-
-  async findOne(id: string): Promise<Role> {
-    const qb = this.rolesRepository
-      .createQueryBuilder()
-      .where({
-        id,
-      })
-      .leftJoin('Role.permissions', 'Permission')
-      .select(['Role', 'Permission.slug']);
-
-    return qb.getOne();
-  }
-
-  async findIds(ids: Array<string>): Promise<Role[]> {
-    return this.rolesRepository.createQueryBuilder().whereInIds(ids).getMany();
-  }
-
-  async update(id: string, updateRoleDto: UpdateRoleDto) {
+  async updateRole(id: string, updateRoleDto: UpdateRoleDto) {
     const role = await this.rolesRepository.findOne({
       where: { id },
     });
@@ -80,7 +80,7 @@ export class RolesService {
     return this.rolesRepository.save(updated);
   }
 
-  async remove(id: string) {
+  async deleteRole(id: string) {
     const role = await this.rolesRepository.findOne({
       where: { id },
     });
@@ -99,7 +99,7 @@ export class RolesService {
       throw new HttpException('角色不存在', HttpStatus.BAD_REQUEST);
     }
 
-    const permissions = await this.permissionService.findIds(permissionIds);
+    const permissions = await this.permissionService.findByIds(permissionIds);
 
     const updated = Object.assign(role, {
       permissions,

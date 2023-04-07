@@ -14,7 +14,28 @@ export class PermissionsService {
     private permissionsRepository: Repository<Permission>,
   ) {}
 
-  async create(createPermissionDto: CreatePermissionDto) {
+  getPermissionList(): Promise<Permission[]> {
+    return this.permissionsRepository.find();
+  }
+
+  getPermissionTree(): Promise<Permission[]> {
+    return this.dataSource.getTreeRepository(Permission).findTrees();
+  }
+
+  getPermission(id: string): Promise<Permission> {
+    return this.permissionsRepository.findOne({
+      where: { id },
+    });
+  }
+
+  async findByIds(ids: Array<string>): Promise<Permission[]> {
+    return this.permissionsRepository
+      .createQueryBuilder()
+      .whereInIds(ids)
+      .getMany();
+  }
+
+  async createPermission(createPermissionDto: CreatePermissionDto) {
     const exist = await this.permissionsRepository.findOne({
       where: { slug: createPermissionDto.slug },
     });
@@ -29,30 +50,15 @@ export class PermissionsService {
     permission.slug = createPermissionDto.slug;
 
     if (createPermissionDto.parentId) {
-      permission.parent = await this.findOne(createPermissionDto.parentId);
+      permission.parent = await this.getPermission(
+        createPermissionDto.parentId,
+      );
     }
 
     return this.permissionsRepository.save(permission);
   }
 
-  findAll(): Promise<Permission[]> {
-    return this.dataSource.getTreeRepository(Permission).findTrees();
-  }
-
-  findOne(id: string): Promise<Permission> {
-    return this.permissionsRepository.findOne({
-      where: { id },
-    });
-  }
-
-  async findIds(ids: Array<string>): Promise<Permission[]> {
-    return this.permissionsRepository
-      .createQueryBuilder()
-      .whereInIds(ids)
-      .getMany();
-  }
-
-  async update(id: string, updatePermissionDto: UpdatePermissionDto) {
+  async updatePermission(id: string, updatePermissionDto: UpdatePermissionDto) {
     const permission = await this.permissionsRepository.findOne({
       where: { id },
     });
@@ -80,7 +86,7 @@ export class PermissionsService {
     return this.permissionsRepository.save(updated);
   }
 
-  async remove(id: string) {
+  async deletePermission(id: string) {
     const permission = await this.permissionsRepository.findOne({
       where: { id },
     });

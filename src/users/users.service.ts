@@ -20,7 +20,9 @@ export class UsersService {
     return this.usersRepository.findOne({
       where: { id },
       relations: {
-        roles: true,
+        roles: {
+          permissions: true,
+        },
       },
     });
   }
@@ -156,9 +158,7 @@ export class UsersService {
       throw new HttpException('用户不存在', HttpStatus.BAD_REQUEST);
     }
 
-    const roles = await this.rolesService.findIds(roleIds);
-
-    console.log(roles);
+    const roles = await this.rolesService.findByIds(roleIds);
 
     const updated = Object.assign(user, {
       roles,

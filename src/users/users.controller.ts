@@ -10,6 +10,7 @@ import {
   HttpCode,
   UseGuards,
   Put,
+  SetMetadata,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { UsersService } from './users.service';
@@ -18,6 +19,13 @@ import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { QueryUserDto } from './dto/query-user.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt.guard';
+import {
+  PermissionsGuard,
+  Permissions,
+} from 'src/auth/guards/permission.guard';
+
+export const CheckPolicies = (handlers: Array<string>) =>
+  SetMetadata('permissions', handlers);
 
 @ApiBearerAuth()
 @ApiTags('users')
@@ -25,7 +33,8 @@ import { JwtAuthGuard } from '../auth/guards/jwt.guard';
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, PermissionsGuard)
+  @Permissions([['ADMIN'], ['USER'], ['USER_READ']])
   @Get()
   async findAll(
     @Query() query: QueryUserDto,
@@ -33,6 +42,8 @@ export class UsersController {
     return this.usersService.findAll(query);
   }
 
+  @UseGuards(JwtAuthGuard, PermissionsGuard)
+  @Permissions([['ADMIN'], ['USER'], ['USER_READ']])
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.usersService.find(id);
@@ -46,7 +57,8 @@ export class UsersController {
     return this.usersService.createUser(createUserDto);
   }
 
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, PermissionsGuard)
+  @Permissions([['ADMIN'], ['USER'], ['USER_UPDATE']])
   @Patch(':id')
   async updateUser(
     @Param('id') id: string,
@@ -56,13 +68,16 @@ export class UsersController {
     return this.usersService.updateUser(id, updateUserDto);
   }
 
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, PermissionsGuard)
+  @Permissions([['ADMIN'], ['USER'], ['USER_DELETE']])
   @Delete(':id')
   @HttpCode(204)
   async deleteUser(@Param('id') id: string) {
     return this.usersService.deleteUser(id);
   }
 
+  @UseGuards(JwtAuthGuard, PermissionsGuard)
+  @Permissions([['ADMIN'], ['USER'], ['USER_UPDATE']])
   @Put(':id/roles')
   async assignRoles(@Param('id') id: string, @Body() roleIds: Array<string>) {
     return this.usersService.assignRoles(id, roleIds);

@@ -1,8 +1,8 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
 import { UsersService } from '../users/users.service';
-import { SignInDto } from '../auth/dto/sign-in.dto';
+import { User } from '../users/entities/user.entity';
 
 @Injectable()
 export class AuthService {
@@ -11,13 +11,17 @@ export class AuthService {
     private jwtService: JwtService,
   ) {}
 
-  async signIn(signInDto: SignInDto): Promise<{ token: string }> {
-    const user = await this.usersService.findOne(signInDto.username);
+  async validateUser(username: string, password: string): Promise<User> {
+    const user = await this.usersService.findOne(username);
 
-    if (!user || !(await bcrypt.compare(signInDto.password, user.password))) {
-      throw new UnauthorizedException('用户名或者密码不正确');
+    if (user && (await bcrypt.compare(password, user.password))) {
+      return user;
+    } else {
+      return null;
     }
+  }
 
+  async signIn(user: User): Promise<{ token: string }> {
     const payload = { username: user.username, sub: user.id };
 
     return {

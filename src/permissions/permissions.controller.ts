@@ -21,33 +21,38 @@ import { JwtAuthGuard } from '../auth/guards/jwt.guard';
 export class PermissionsController {
   constructor(private readonly permissionsService: PermissionsService) {}
 
-  @UseGuards(JwtAuthGuard)
-  @Post()
-  async create(@Body() createPermissionDto: CreatePermissionDto) {
-    return this.permissionsService.create(createPermissionDto);
+  @Get('tree')
+  getPermissionTree() {
+    return this.permissionsService.getPermissionTree();
   }
 
   @Get()
-  findAll() {
-    return this.permissionsService.findAll();
+  getPermissionList() {
+    return this.permissionsService.getPermissionList();
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.permissionsService.findOne(id);
+  getPermission(@Param('id') id: string) {
+    return this.permissionsService.getPermission(id);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post()
+  async createPermission(@Body() createPermissionDto: CreatePermissionDto) {
+    return this.permissionsService.createPermission(createPermissionDto);
   }
 
   @Patch(':id')
-  update(
+  updatePermission(
     @Param('id') id: string,
     @Body() updatePermissionDto: UpdatePermissionDto,
   ) {
-    return this.permissionsService.update(id, updatePermissionDto);
+    return this.permissionsService.updatePermission(id, updatePermissionDto);
   }
 
   @HttpCode(204)
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.permissionsService.remove(id);
+  deletePermission(@Param('id') id: string) {
+    return this.permissionsService.deletePermission(id);
   }
 }
