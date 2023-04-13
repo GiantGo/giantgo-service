@@ -27,8 +27,7 @@ export class AuthController {
 
   @UseGuards(JwtAuthGuard)
   @Get('mine')
-  me(@Request() req: any): Promise<User> {
-    console.log(req.user);
+  mine(@Request() req: any): Promise<User> {
     return req.user;
   }
 }

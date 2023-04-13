@@ -40,11 +40,9 @@ export class PermissionsGuard implements CanActivate {
       required = [required as string[]];
     }
 
-    const sufficient = (required as string[][]).some(function (required) {
-      return required.every(function (permission) {
-        return permissions.indexOf(permission) !== -1;
-      });
-    });
+    const sufficient = (required as string[][]).some((required) =>
+      required.every((permission) => permissions.indexOf(permission) !== -1),
+    );
 
     if (!sufficient) {
       throw new ForbiddenException('访问被拒绝');

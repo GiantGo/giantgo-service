@@ -1,4 +1,6 @@
-import { Module } from '@nestjs/common';
+import { CacheStore, Module } from '@nestjs/common';
+import { CacheModule } from '@nestjs/cache-manager';
+import { redisStore } from 'cache-manager-redis-store';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule, TypeOrmModuleOptions } from '@nestjs/typeorm';
 import { UsersModule } from './users/users.module';
@@ -26,6 +28,26 @@ import { PermissionsModule } from './permissions/permissions.module';
         };
 
         return databaseConfig;
+      },
+    }),
+    CacheModule.registerAsync({
+      isGlobal: true,
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: async (configService: ConfigService) => {
+        const store = await redisStore({
+          socket: {
+            host: configService.get('REDIS_HOST'),
+            port: +configService.get('REDIS_PORT'),
+          },
+          password: configService.get('REDIS_PASSWORD'),
+          database: +configService.get('REDIS_DATABASE'),
+          ttl: 3600,
+        });
+
+        return {
+          store: store as unknown as CacheStore,
+        };
       },
     }),
     UsersModule,
